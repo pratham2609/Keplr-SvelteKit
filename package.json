@@ -46,6 +46,7 @@
     "@keplr-wallet/stores": "^0.12.72",
     "axios": "^1.6.7",
     "cosmjs-types": "0.4.1",
-    "highlight.js": "11.9.0"
+    "highlight.js": "11.9.0",
+    "svelte-french-toast": "^1.2.0"
   }
 }

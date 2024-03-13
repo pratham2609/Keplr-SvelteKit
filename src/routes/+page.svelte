@@ -33,8 +33,10 @@
 
 		// Get the address and balance of your user
 		const account: AccountData = (await offlineSigner.getAccounts())[0];
+		console.log(account)
 		let myAddress = account.address;
 		let myBalance = (await signingClient.getBalance(account.address, state.denom)).amount;
+		console.log(myBalance)
 		globalState.update((localState) => {
 			const newState = { ...localState, myAddress: myAddress, myBalance: myBalance };
 			return newState;

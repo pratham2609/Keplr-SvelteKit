@@ -1,10 +1,14 @@
 <script lang="ts">
 	import { type Coin, SigningStargateClient, StargateClient } from '@cosmjs/stargate';
 	import { type OfflineSigner } from '@cosmjs/proto-signing';
-	import { get } from 'svelte/store';
-	import { globalState } from '../stores/walletStore';
+	import { globalState, initialState, type State } from '../stores/walletStore';
 	import { rpcUrl } from '../stores/global';
-	$: state = get(globalState);
+	import { onDestroy } from 'svelte';
+	let state: State = initialState; // Initialize state
+
+	const unsubscribe = globalState.subscribe((value) => {
+		state = value; // Update local state when globalState changes
+	});
 	async function updateFaucetBalance() {
 		const client = await StargateClient.connect(rpcUrl);
 		const balances: readonly Coin[] = await client.getAllBalances(state.faucetAddress);
@@ -32,7 +36,15 @@
 		state.myBalance = (await signingClient.getBalance(state.myAddress, denom)).amount;
 		state.faucetBalance = (await signingClient.getBalance(state.faucetAddress, denom)).amount;
 		globalState.update(() => {
-			const newState = state;
+			const newState = {
+				faucetAddress: '',
+				denom: 'denom',
+				faucetBalance: '0',
+				myAddress: state.myAddress,
+				myBalance: state.myBalance,
+				toSend: '0',
+				memo: 'Hello from the Theta Faucet!'
+			};
 			return newState;
 		});
 	}
@@ -42,6 +54,7 @@
 			[(e.target as HTMLInputElement).name]: (e.target as HTMLInputElement).value
 		};
 	};
+	onDestroy(unsubscribe);
 </script>
 
 <div class="w-full flex flex-col gap-5 items-center">

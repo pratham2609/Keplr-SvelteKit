@@ -1,6 +1,6 @@
 // import { setContext } from "svelte";
 import { writable, type Writable } from "svelte/store";
-interface State {
+export interface State {
     faucetAddress: string;
     denom: string;
     faucetBalance: string;
@@ -9,10 +9,10 @@ interface State {
     toSend: string;
     memo: string
 }
-const initialState: State = {
+export const initialState: State = {
     faucetAddress: '',
-    denom: 'Loading...',
-    faucetBalance: 'address',
+    denom: 'denom',
+    faucetBalance: '0',
     myAddress: 'Loading...',
     myBalance: 'Loading...',
     toSend: '0',
