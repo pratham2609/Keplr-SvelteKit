@@ -2,12 +2,13 @@
 	import { getTestnetChainInfo, rpcUrl, transactionMode } from './../stores/global';
 	import { get } from 'svelte/store';
 	import Send from '../components/Send.svelte';
-	import Delegate from '../components/Delegate.svelte';
 	import { onMount } from 'svelte';
 	import { globalState, isWalletInitialised } from '../stores/walletStore';
 	import { SigningStargateClient } from '@cosmjs/stargate';
 	import { type AccountData, type OfflineSigner } from '@cosmjs/proto-signing';
-
+	import Stake from '../components/Stake.svelte';
+	import type { PageData } from './$types';
+	export let data: PageData;
 	let mode = get(transactionMode);
 	let isWallet = get(isWalletInitialised);
 	let state = get(globalState);
@@ -25,7 +26,6 @@
 			alert('You need to install Keplr');
 			return;
 		}
-		// console.log('keplr hai');
 		await keplr.experimentalSuggestChain(getTestnetChainInfo()); // injects non native chains
 		// Create the signing client
 		const offlineSigner: OfflineSigner = window.getOfflineSigner!('theta-testnet-001');
@@ -33,10 +33,8 @@
 
 		// Get the address and balance of your user
 		const account: AccountData = (await offlineSigner.getAccounts())[0];
-		console.log(account)
 		let myAddress = account.address;
 		let myBalance = (await signingClient.getBalance(account.address, state.denom)).amount;
-		console.log(myBalance)
 		globalState.update((localState) => {
 			const newState = { ...localState, myAddress: myAddress, myBalance: myBalance };
 			return newState;
@@ -75,7 +73,7 @@
 			{#if mode == 'Send'}
 				<Send />
 			{:else}
-				<Delegate />
+				<Stake data={data.validators} />
 			{/if}
 		</div>
 	{:else}

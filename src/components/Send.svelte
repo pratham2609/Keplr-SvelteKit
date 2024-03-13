@@ -1,9 +1,15 @@
 <script lang="ts">
-	import { type Coin, SigningStargateClient, StargateClient } from '@cosmjs/stargate';
+	import {
+		type Coin,
+		SigningStargateClient,
+		StargateClient,
+		assertIsDeliverTxSuccess
+	} from '@cosmjs/stargate';
 	import { type OfflineSigner } from '@cosmjs/proto-signing';
 	import { globalState, initialState, type State } from '../stores/walletStore';
 	import { rpcUrl } from '../stores/global';
 	import { onDestroy } from 'svelte';
+	import toast, { Toaster } from 'svelte-french-toast';
 	let state: State = initialState; // Initialize state
 
 	const unsubscribe = globalState.subscribe((value) => {
@@ -17,13 +23,15 @@
 			const newState = { ...localState, denom: first.denom, faucetBalance: first.amount };
 			return newState;
 		});
+		toast.success('Fetched Details');
 	}
 	async function onSendClicked() {
 		const { denom, toSend } = state;
 		const offlineSigner: OfflineSigner = window.getOfflineSigner!('theta-testnet-001');
 		const signingClient = await SigningStargateClient.connectWithSigner(rpcUrl, offlineSigner);
-		console.log(signingClient);
+		toast.loading('Sending');
 		// Submit the transaction to send tokens to the faucet
+
 		const sendResult = await signingClient.sendTokens(
 			state.myAddress,
 			state.faucetAddress,
@@ -31,7 +39,8 @@
 			{ amount: [{ denom: 'uatom', amount: '500' }], gas: '200000' },
 			state.memo
 		);
-		console.log(sendResult);
+		assertIsDeliverTxSuccess(sendResult);
+		console.log(sendResult.transactionHash);
 		// Update the balance in the user interface
 		state.myBalance = (await signingClient.getBalance(state.myAddress, denom)).amount;
 		state.faucetBalance = (await signingClient.getBalance(state.faucetAddress, denom)).amount;
@@ -47,6 +56,7 @@
 			};
 			return newState;
 		});
+		toast.success('Send Successfully');
 	}
 	const handleValueChange = (e: Event) => {
 		state = {
@@ -57,6 +67,7 @@
 	onDestroy(unsubscribe);
 </script>
 
+<Toaster />
 <div class="w-full flex flex-col gap-5 items-center">
 	<fieldset class="card w-full flex flex-col gap-2 px-5 py-2">
 		<legend>Faucet</legend>
@@ -80,7 +91,7 @@
 		<p>Address: {state.myAddress}</p>
 		<p>Balance: {state.myBalance}</p>
 	</fieldset>
-	<fieldset class="card w-full flex flex-col gap-2 px-5 py-2">
+	<fieldset class="card w-full flex flex-col gap-3 px-5 py-2">
 		<legend>Send</legend>
 		<p>Amount to send:</p>
 		<input
