@@ -1,5 +1,8 @@
 
+import { browser } from "$app/environment";
+import type { ChainInfo } from "@keplr-wallet/types";
 import { writable, type Writable } from "svelte/store";
+import { getTestnetChainInfo } from "./global";
 export interface State {
     faucetAddress: string;
     denom: string;
@@ -9,15 +12,20 @@ export interface State {
     toSend: string;
     memo: string
 }
-export const initialState: State = {
-    faucetAddress: '',
-    denom: 'denom',
-    faucetBalance: '0',
-    myAddress: 'Loading...',
-    myBalance: 'Loading...',
-    toSend: '0',
-    memo: "Hello from the Theta Faucet!"
-};
+
+const storedState = browser ? window.localStorage.getItem('state') : null;
+
+export const initialState: State = storedState
+    ? JSON.parse(storedState)
+    : {
+        faucetAddress: '',
+        denom: 'denom',
+        faucetBalance: '0',
+        myAddress: 'Loading...',
+        myBalance: 'Loading...',
+        toSend: '0',
+        memo: "Hello from the Theta Faucet!"
+    };
 
 export interface InitialValidatorState {
     path: string;
@@ -83,7 +91,6 @@ export interface InitialValidatorState {
         total_tokens_display: number;
         total_usd: number;
     };
-    // slashes: any[]; // Placeholder, you can define a proper type if needed
     image: string;
     restake: {
         address: string;
@@ -181,7 +188,6 @@ export const ValidatorState: InitialValidatorState = {
         total_tokens_display: 0,
         total_usd: 0
     },
-    // slashes: [],
     image: "",
     restake: {
         address: "",
@@ -202,10 +208,30 @@ export const ValidatorState: InitialValidatorState = {
     }
 };
 // Output the initial state
+const initialValue = browser ? window.localStorage.getItem('connect') ?? JSON.stringify(window.localStorage.getItem('connect')) : "not-connected";
+export const isWalletInitialised = writable<string>(initialValue);
+isWalletInitialised.subscribe(value => {
+    if (browser) {
+        window.localStorage.setItem('connect', value);
+    }
+})
 
-export const isWalletInitialised = writable(false);
+
 export const globalState: Writable<State> = writable(initialState);
 
+globalState.subscribe(value => {
+    if (browser) {
+        window.localStorage.setItem('state', JSON.stringify(value));
+    }
+});
+const storedChain = browser ? window.localStorage.getItem('chainData') : null;
+const initialChainState: ChainInfo = storedChain ? JSON.parse(storedChain) : getTestnetChainInfo[0];
+export const chainDataState: Writable<ChainInfo> = writable(initialChainState)
+chainDataState.subscribe((value) => {
+    if (browser) {
+        window.localStorage.setItem('chainData', JSON.stringify(value));
+    }
+});
 export const validators: Writable<InitialValidatorState[]> = writable([
     ValidatorState
 ]);

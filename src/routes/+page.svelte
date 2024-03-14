@@ -1,23 +1,32 @@
 <script lang="ts">
-	import { getTestnetChainInfo, rpcUrl, transactionMode } from './../stores/global';
+	import { getTestnetChainInfo,transactionMode } from '../lib/stores/global';
 	import { get } from 'svelte/store';
 	import Send from '../components/Send.svelte';
 	import { onMount } from 'svelte';
-	import { globalState, isWalletInitialised } from '../stores/walletStore';
+	import { chainDataState, globalState, initialState, isWalletInitialised } from '../lib/stores/walletStore';
 	import { SigningStargateClient } from '@cosmjs/stargate';
 	import { type AccountData, type OfflineSigner } from '@cosmjs/proto-signing';
 	import Stake from '../components/Stake.svelte';
 	import type { PageData } from './$types';
+	import { getBalance } from '$lib/actions';
 	export let data: PageData;
 	let mode = get(transactionMode);
-	let isWallet = get(isWalletInitialised);
 	let state = get(globalState);
-
+	$: chainData = get(chainDataState);
 	const changeMode = (newMode: string) => {
 		transactionMode.update(() => {
 			return newMode;
 		});
 		mode = newMode;
+	};
+	$: chainName = get(chainDataState).chainName;
+	const changeChainName = (e: Event) => {
+		chainName = (e.target as HTMLInputElement).value;
+		chainDataState.update(() => {
+			return chainName === 'cosmoshubtestnet' ? getTestnetChainInfo[0] : getTestnetChainInfo[2];
+		});
+		globalState.set(initialState);
+		getBalance();
 	};
 	const connectWallet = async () => {
 		// Suggest the testnet chain to Keplr
@@ -26,11 +35,10 @@
 			alert('You need to install Keplr');
 			return;
 		}
-		await keplr.experimentalSuggestChain(getTestnetChainInfo()); // injects non native chains
+		await keplr.experimentalSuggestChain(chainData); // injects non native chains
 		// Create the signing client
-		const offlineSigner: OfflineSigner = window.getOfflineSigner!('theta-testnet-001');
-		const signingClient = await SigningStargateClient.connectWithSigner(rpcUrl, offlineSigner);
-
+		const offlineSigner: OfflineSigner = window.getOfflineSigner!(chainData.chainId);
+		const signingClient = await SigningStargateClient.connectWithSigner(chainData.rpc, offlineSigner);
 		// Get the address and balance of your user
 		const account: AccountData = (await offlineSigner.getAccounts())[0];
 		let myAddress = account.address;
@@ -39,8 +47,7 @@
 			const newState = { ...localState, myAddress: myAddress, myBalance: myBalance };
 			return newState;
 		});
-		isWalletInitialised.update(() => true);
-		isWallet = true;
+		isWalletInitialised.update(() => 'connected');
 	};
 
 	onMount(() => {
@@ -49,12 +56,14 @@
 			alert('You need to install Keplr');
 			return;
 		}
-		isWalletInitialised.update(() => true);
+		if ($isWalletInitialised == 'connected') {
+			connectWallet();
+		}
 	});
 </script>
 
 <main class="w-screen h-screen flex items-center justify-center flex-col">
-	{#if isWallet}
+	{#if $isWalletInitialised == 'connected'}
 		<div
 			class="max-w-[500px] w-full h-[500px] my-auto mx-auto flex flex-col gap-10 items-center justify-start"
 		>
@@ -70,10 +79,18 @@
 					>Delegate</button
 				>
 			</div>
+			<select
+				bind:value={chainName}
+				class="border-2 rounded-lg bg-purple-900"
+				on:change={changeChainName}
+			>
+				<option value="cosmoshubtestnet">Cosmoshub</option>
+				<option value="persistencetestnet">Persistence</option>
+			</select>
 			{#if mode == 'Send'}
 				<Send />
 			{:else}
-				<Stake data={data.validators} />
+				<Stake data={data.validatorData} />
 			{/if}
 		</div>
 	{:else}
