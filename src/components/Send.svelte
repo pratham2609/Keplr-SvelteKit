@@ -62,10 +62,11 @@
 			await signingClient.signAndBroadcast(
 				state.myAddress,
 				[sendMsg],
-				{ amount: [{ denom: 'uatom', amount: '500' }], gas: '200000' },
+				{ amount: [{ denom: state.denom, amount: '500' }], gas: '200000' },
 				state.memo
 			)
 		);
+
 		state.myBalance = (await signingClient.getBalance(state.myAddress, denom)).amount;
 		state.faucetBalance = (await signingClient.getBalance(state.faucetAddress, denom)).amount;
 		globalState.update(() => {
@@ -88,7 +89,7 @@
 			[(e.target as HTMLInputElement).name]: (e.target as HTMLInputElement).value
 		};
 	};
-	
+
 	onDestroy(unsubscribe);
 </script>
 

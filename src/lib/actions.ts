@@ -17,14 +17,14 @@ export const getBalance = async () => {
     // Get the address and balance of your user
     const account: AccountData = (await offlineSigner.getAccounts())[0];
     const myBalance = (await signingClient.getBalance(account.address, get(globalState).denom)).amount;
-    globalState.update((localState) => {
-        const newState = { ...localState, myAddress: account.address, myBalance: myBalance };
-        return newState;
-    });
-    // const valData = await getValidators(chainData.chainName);
-    // validators.update(() => {
-    //     return valData;
-    // });
+    globalState.set({
+        faucetAddress: '',
+        denom: get(globalState).denom,
+        faucetBalance: '0',
+        toSend: '0',
+        memo: "Hello from the Theta Faucet!",
+        myAddress: account.address, myBalance: myBalance
+    })
 }
 
 export const getValidators = async (chain: string) => {

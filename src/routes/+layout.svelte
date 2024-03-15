@@ -1,7 +1,7 @@
 <script lang="ts">
 	import '../app.postcss';
 	import { browser } from '$app/environment';
-	// import { QueryClient, QueryClientProvider } from '@tanstack/svelte-query';
+	import { QueryClient, QueryClientProvider } from '@tanstack/svelte-query';
 	// Highlight JS
 	import hljs from 'highlight.js/lib/core';
 	import 'highlight.js/styles/github-dark.css';
@@ -20,19 +20,15 @@
 	// Floating UI for Popups
 	import { computePosition, autoUpdate, flip, shift, offset, arrow } from '@floating-ui/dom';
 	import { storePopup } from '@skeletonlabs/skeleton';
+	import type { LayoutData } from './$types';
+
+	export let data: LayoutData;
 	storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow });
-	// const queryClient = new QueryClient({
-	// 	defaultOptions: {
-	// 		queries: {
-	// 			enabled: browser
-	// 		}
-	// 	}
-	// });
 </script>
 
-<!-- <QueryClientProvider client={queryClient}> -->
+<QueryClientProvider client={data.queryClient}>
 	<main>
 		<slot />
 	</main>
 	<!-- <SvelteQueryDevtools /> -->
-<!-- </QueryClientProvider> -->
+</QueryClientProvider>

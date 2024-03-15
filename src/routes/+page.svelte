@@ -23,7 +23,7 @@
 	const changeChainName = (e: Event) => {
 		chainName = (e.target as HTMLInputElement).value;
 		chainDataState.update(() => {
-			return chainName === 'cosmoshubtestnet' ? getTestnetChainInfo[0] : getTestnetChainInfo[2];
+			return chainName === 'cosmoshubtestnet' ? getTestnetChainInfo[0] : getTestnetChainInfo[3];
 		});
 		globalState.set(initialState);
 		getBalance();
@@ -85,7 +85,7 @@
 				on:change={changeChainName}
 			>
 				<option value="cosmoshubtestnet">Cosmoshub</option>
-				<option value="persistencetestnet">Persistence</option>
+				<option value="celestiatestnet3">Celestia</option>
 			</select>
 			{#if mode == 'Send'}
 				<Send />

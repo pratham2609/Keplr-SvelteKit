@@ -141,5 +141,46 @@ export const getTestnetChainInfo: ChainInfo[] = [
         },
         coinType: 118,
         features: ['stargate', 'ibc-transfer', 'no-legacy-stdTx']
+    },
+    {
+        chainId: 'mocha-4',
+        chainName: 'Mocha Testnet',
+        rpc: 'https://rpc-mocha.pops.one',
+        rest: 'https://api-mocha.pops.one',
+        bip44: {
+            coinType: 118
+        },
+        bech32Config: {
+            bech32PrefixAccAddr: 'celestia',
+            bech32PrefixAccPub: 'celestiapub',
+            bech32PrefixValAddr: 'celestiavaloper',
+            bech32PrefixValPub: 'celestiavaloperpub',
+            bech32PrefixConsAddr: 'celestiavalcons',
+            bech32PrefixConsPub: 'celestiavalconspub'
+        },
+        currencies: [
+            {
+                coinDenom: 'TIA',
+                coinMinimalDenom: 'utia',
+                coinDecimals: 6,
+                // coinGeckoId: null
+            }
+        ],
+        feeCurrencies: [
+            {
+                coinDenom: 'TIA',
+                coinMinimalDenom: 'utia',
+                coinDecimals: 6,
+                // coinGeckoId: null
+            }
+        ],
+        stakeCurrency: {
+            coinDenom: 'TIA',
+            coinMinimalDenom: 'utia',
+            coinDecimals: 6,
+            // coinGeckoId: null
+        },
+        coinType: 118,
+        features: []
     }
 ]
