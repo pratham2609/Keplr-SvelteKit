@@ -48,6 +48,7 @@
 			{ amount: [{ denom: $globalState.denom, amount: '500' }], gas: '200000' },
 			$globalState.memo
 		);
+		console.log(sendResult);
 		assertIsDeliverTxSuccess(sendResult);
 		let myBalance = (await signingClient.getBalance($globalState.myAddress, denom)).amount;
 		globalState.update(() => {
@@ -58,11 +59,22 @@
 				myAddress: $globalState.myAddress,
 				myBalance: myBalance,
 				toSend: '0',
-				memo: 'Hello from the Theta Faucet!'
+				memo: ''
 			};
 			return newState;
 		});
-		toast.success('Send Successfully');
+		let toLink = '';
+		if ($chainDataState.explorers.find((val) => val.kind == 'mintscan')) {
+			toLink = `https://www.mintscan.io/${$chainDataState.secName}/tx/`;
+		} else {
+			toLink = $chainDataState.explorers[0].url;
+		}
+		toast.success(
+			`Send Successfully, check transaction at
+			<a href=${toLink + sendResult.transactionHash}>This link</a>
+		`,
+			{ duration: 7000 }
+		);
 	}
 	const handleValueChange = (e: Event) => {
 		globalState.update((localState) => {
@@ -102,7 +114,7 @@
 			<p>Address: {$globalState.myAddress}</p>
 			<p>Balance: {(Number($globalState.myBalance) / 1000000).toFixed(6)} {$globalState.denom}</p>
 		</fieldset>
-		<fieldset class="card w-full flex flex-col gap-3 px-5 py-2">
+		<fieldset class="card w-full flex flex-col gap-3 px-5 py-4">
 			<legend>Send</legend>
 			<p>Amount to send:</p>
 			<input
@@ -112,10 +124,12 @@
 				placeholder="Amount to send"
 				on:input={handleValueChange}
 			/>
+			<label for="memo">write a memo</label>
 			<input
 				bind:value={$globalState.memo}
-				class="rounded-md bg-transparent px-2 py-0"
+				class="rounded-md bg-transparent px-2 py-1"
 				name="memo"
+				id="memo"
 				placeholder="Write a memo!"
 				on:input={handleValueChange}
 			/>

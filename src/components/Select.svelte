@@ -1,13 +1,12 @@
 <script lang="ts">
 	import { getTestnetChainInfo } from '$lib/stores/global';
 	import { chainDataState, globalState } from '$lib/stores/walletStore';
-	import { getBalance, getRewards, getValidators } from '$lib/actions';
+	import { connectWallet, getRewards, getValidators } from '$lib/actions';
 	import { get } from 'svelte/store';
 	import toast from 'svelte-french-toast';
 
 	$: chainId = get(chainDataState).chainName;
 	const changeChainName = async (e: Event) => {
-		toast.loading('loading Data...', { duration: 2500 });
 		try {
 			chainId = (e.target as HTMLInputElement).value;
 			const newChain = getTestnetChainInfo.filter((val) => val.chainId == chainId);
@@ -15,10 +14,9 @@
 			globalState.update((lastState) => {
 				return { ...lastState, denom: $chainDataState.currencies[0].coinMinimalDenom };
 			});
-			await getBalance();
+			await connectWallet();
 			await getValidators();
 			await getRewards();
-			toast.success('Fetching successful');
 		} catch (error) {
 			toast.error(String(error));
 		}

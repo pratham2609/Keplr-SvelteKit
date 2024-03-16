@@ -1,6 +1,5 @@
-import type { ChainInfo } from "@keplr-wallet/types";
 import { writable, type Writable } from "svelte/store";
-import { getTestnetChainInfo } from "./global";
+import { getTestnetChainInfo, type ChainDataInfo } from "./global";
 import { browser } from "$app/environment";
 import type { Reward } from "../../routes/global";
 export interface State {
@@ -213,6 +212,6 @@ isWalletInitialised.subscribe(value => {
 
 
 export const globalState: Writable<State> = writable(initialState);
-export const chainDataState: Writable<ChainInfo> = writable(getTestnetChainInfo[0])
+export const chainDataState: Writable<ChainDataInfo> = writable(getTestnetChainInfo[0])
 export const validators: Writable<InitialValidatorState[]> = writable([]);
 export const rewards: Writable<Reward[]> = writable([])

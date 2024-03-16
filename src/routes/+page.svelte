@@ -4,53 +4,16 @@
 	import Send from '../components/Send.svelte';
 	import { onMount } from 'svelte';
 	import { chainDataState, globalState, isWalletInitialised } from '../lib/stores/walletStore';
-	import { SigningStargateClient } from '@cosmjs/stargate';
-	import { type AccountData, type OfflineSigner } from '@cosmjs/proto-signing';
 	import Stake from '../components/Stake.svelte';
 	import Select from '../components/Select.svelte';
+	import { connectWallet } from '$lib/actions';
 	$: mode = get(transactionMode);
-	$: chainData = get(chainDataState);
 	const changeMode = (newMode: string) => {
 		transactionMode.update(() => {
 			return newMode;
 		});
 		mode = newMode;
 	};
-	const connectWallet = async () => {
-		// Suggest the testnet chain to Keplr
-		const { keplr } = window;
-		if (!keplr) {
-			alert('You need to install Keplr');
-			return;
-		}
-		await keplr.experimentalSuggestChain(chainData); // injects non native chains
-		// Create the signing client
-		const offlineSigner: OfflineSigner = window.getOfflineSigner!(chainData.chainId);
-		const signingClient = await SigningStargateClient.connectWithSigner(
-			chainData.rpc,
-			offlineSigner
-		);
-		// Get the address and balance of your user
-		const account: AccountData = (await offlineSigner.getAccounts())[0];
-		let myAddress = account.address;
-		let myBalance = (
-			await signingClient.getBalance(
-				account.address,
-				$chainDataState.currencies[0].coinMinimalDenom
-			)
-		).amount;
-		globalState.update((localState) => {
-			const newState = {
-				...localState,
-				denom: $chainDataState.currencies[0].coinMinimalDenom,
-				myAddress: myAddress,
-				myBalance: myBalance
-			};
-			return newState;
-		});
-		isWalletInitialised.update(() => 'connected');
-	};
-
 	onMount(() => {
 		const { keplr } = window;
 		if (!keplr) {
@@ -62,9 +25,15 @@
 			connectWallet();
 		}
 	});
+	const disconnect = () => {
+		// const { keplr } = window;
+		// if (keplr) keplr.disable()
+		window.keplr = undefined
+		console.log(window.keplr)
+	};
 </script>
 
-<main class="w-screen h-screen flex flex-col items-center py-20">
+<main class="w-screen h-screen flex flex-col items-center relative py-20">
 	{#if $isWalletInitialised == 'connected'}
 		<div
 			class="max-w-[500px] w-full h-full my-auto mx-auto flex flex-col gap-10 items-center justify-start"
@@ -88,6 +57,9 @@
 				<Stake />
 			{/if}
 		</div>
+		<button on:click={disconnect} class="absolute top-10 right-10 bg-gray-700 text-white rounded-lg font-bold px-2 py-1"
+			>Disconnect</button
+		>
 	{:else}
 		<button on:click={() => connectWallet()} class="px-2 py-1 rounded-lg bg-gray-500"
 			>Connect to wallet</button

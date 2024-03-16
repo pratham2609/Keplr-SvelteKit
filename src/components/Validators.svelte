@@ -12,58 +12,37 @@
 	});
 </script>
 
-<table class="w-[900px] flex flex-col items-center">
-	<tr class="w-full flex justify-between mb-5">
+<table class="w-[900px]">
+	<tr class="mb-5">
 		<th class="font-bold">Validator</th>
 		<th class="font-bold">Active</th>
 		<th class="font-bold">Actions</th>
 	</tr>
 	{#if loading}
-		<p>Data is loading...</p>
+		<p class="w-full text-center flex justify-center">Data is loading...</p>
 	{:else if $validators.length == 0}
 		<p>No active validators for {$chainDataState.chainName}</p>
 	{:else}
 		{#each $validators as val}
-			{#if val.rank >= 1 && val.rank <= 3}
-				<tr class="w-full relative flex mb-2 items-center justify-between">
-					<td>
-						<p>
-							{val.name ? val.name : val.moniker}
-						</p>
-					</td>
-					<td>
-						{val.active}
-					</td>
-					<td>
-						<button
-							on:click={() => {
-								togglePopup(val);
-							}}
-							class="bg-green-600 rounded-lg px-2 py-1">Stake</button
-						>
-					</td>
+			<tr class=" relative mb-2">
+				<td>
+					{val.name ? val.name : val.moniker}
+				</td>
+				<td class="text-center">
+					{val.active}
+				</td>
+				<td class="flex justify-center">
+					<button
+						on:click={() => {
+							togglePopup(val);
+						}}
+						class="bg-green-600 rounded-lg px-2 py-1">Stake</button
+					>
+				</td>
+				{#if val.rank >= 1 && val.rank <= 3}
 					<p class="text-green-700 absolute -left-10">#{val.rank}</p>
-				</tr>
-			{:else}
-				<tr class="w-full relative flex mb-2 items-center justify-between">
-					<td>
-						<p>
-							{val.name ? val.name : val.moniker}
-						</p>
-					</td>
-					<td>
-						{val.active}
-					</td>
-					<td>
-						<button
-							on:click={() => {
-								togglePopup(val);
-							}}
-							class="bg-green-600 rounded-lg px-2 py-1">Stake</button
-						>
-					</td>
-				</tr>
-			{/if}
+				{/if}
+			</tr>
 		{/each}
 	{/if}
 </table>

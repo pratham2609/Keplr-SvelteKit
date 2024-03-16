@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { connectWallet } from '$lib/actions';
 	import '../app.postcss';
 	import { browser } from '$app/environment';
 	import { QueryClient, QueryClientProvider } from '@tanstack/svelte-query';
@@ -10,6 +11,7 @@
 	import css from 'highlight.js/lib/languages/css';
 	import javascript from 'highlight.js/lib/languages/javascript';
 	import typescript from 'highlight.js/lib/languages/typescript';
+	import { onMount, onDestroy } from 'svelte';
 
 	hljs.registerLanguage('xml', xml); // for HTML
 	hljs.registerLanguage('css', css);
@@ -24,6 +26,12 @@
 
 	export let data: LayoutData;
 	storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow });
+
+	onMount(() => {
+		window.addEventListener('keplr_keystorechange', () => {
+			connectWallet();
+		});
+	});
 </script>
 
 <QueryClientProvider client={data.queryClient}>

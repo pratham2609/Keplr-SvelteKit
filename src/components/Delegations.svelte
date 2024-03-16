@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getRewards } from '$lib/actions';
+	import { getRewards, withdrawRewards } from '$lib/actions';
 	import { rewards } from '$lib/stores/walletStore';
 	let loading = false;
 	onMount(async () => {
@@ -36,7 +36,12 @@
 						<p class="flex">{(Number(re.amount) / 1000000).toFixed(6)} {re.denom}</p>
 					{/each}
 				</td>
-				<td><button class="bg-gray-600 rounded-lg px-2 py-1">Undelegate</button></td>
+				<td class="flex items-center gap-2">
+					<button disabled class="bg-gray-600 rounded-lg px-2 py-1">Undelegate</button>
+					<button on:click={() => withdrawRewards(val)} class="bg-green-600 rounded-lg px-2 py-1"
+						>Withdraw</button
+					>
+				</td>
 			</tr>
 		{/each}
 	{/if}

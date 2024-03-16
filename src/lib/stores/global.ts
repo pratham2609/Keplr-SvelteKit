@@ -3,15 +3,37 @@ import { writable, type Writable } from "svelte/store";
 
 export const transactionMode: Writable<string> = writable("Send");
 // test faucet = cosmos15aptdqmm7ddgtcrjvc5hs988rlrkze40l4q0he
-export const getTestnetChainInfo: ChainInfo[] = [
+export interface ChainDataInfo extends ChainInfo {
+    explorers: {
+        kind: string,
+        url: string,
+        tx_page: string,
+        account_page?: string
+    }[],
+    secName: string
+}
+export const getTestnetChainInfo: ChainDataInfo[] = [
     {
         chainId: 'theta-testnet-001',
         chainName: 'cosmoshubtestnet',
+        secName: "cosmoshub",
         rpc: 'https://rpc.sentry-01.theta-testnet.polypore.xyz/',
         rest: 'https://rest.sentry-01.theta-testnet.polypore.xyz/',
         bip44: {
             coinType: 118
         },
+        explorers: [
+            {
+                kind: "mintscan",
+                url: "https://testnet.mintscan.io/cosmoshub-testnet",
+                tx_page: "https://testnet.mintscan.io/cosmoshub-testnet/txs/"
+            },
+            {
+                kind: "Big Dipper",
+                url: "https://explorer.theta-testnet.polypore.xyz/",
+                tx_page: "https://explorer.theta-testnet.polypore.xyz/transactions/"
+            }
+        ],
         bech32Config: {
             bech32PrefixAccAddr: 'cosmos',
             bech32PrefixAccPub: 'cosmos' + 'pub',
@@ -53,11 +75,25 @@ export const getTestnetChainInfo: ChainInfo[] = [
     {
         chainId: 'test-core-1',
         chainName: 'persistencetestnet2',
+        secName: "persistence",
         rpc: 'https://persistence-testnet-rpc.polkachu.com/',
         rest: 'https://persistence-testnet-api.polkachu.com/',
         bip44: {
             coinType: 118
         },
+        explorers: [
+            {
+                kind: "ping.pub",
+                url: "https://testnet.ping.pub/test-core-1/",
+                tx_page: "https://testnet.ping.pub/test-core-1/tx/"
+            },
+            {
+                kind: "mintscan",
+                url: "https://testnet.mintscan.io/persistence-testnet",
+                tx_page: "https://testnet.mintscan.io/persistence-testnet/txs/",
+                account_page: "https://testnet.mintscan.io/persistence-testnet/account/"
+            }
+        ],
         bech32Config: {
             bech32PrefixAccAddr: 'persistence',
             bech32PrefixAccPub: 'persistence' + 'pub',
@@ -99,6 +135,7 @@ export const getTestnetChainInfo: ChainInfo[] = [
     {
         chainId: 'osmo-test-5',
         chainName: 'osmosistestnet',
+        secName: "osmosis",
         rpc: 'https://rpc.osmotest5.osmosis.zone/',
         rest: 'https://lcd.osmotest5.osmosis.zone/',
         bip44: {
@@ -112,6 +149,20 @@ export const getTestnetChainInfo: ChainInfo[] = [
             bech32PrefixConsAddr: 'osmo' + 'valcons',
             bech32PrefixConsPub: 'osmo' + 'valconspub'
         },
+        explorers: [
+            {
+                kind: "mintscan",
+                url: "https://testnet.mintscan.io/osmosis-testnet",
+                tx_page: "https://testnet.mintscan.io/osmosis-testnet/txs/",
+                account_page: "https://testnet.mintscan.io/osmosis-testnet/account/"
+            },
+            {
+                kind: "ping.pub",
+                url: "https://explorer.osmotest5.osmosis.zone",
+                tx_page: "https://explorer.osmotest5.osmosis.zone/osmo-test-5/tx/",
+                account_page: "https://explorer.osmotest5.osmosis.zone/osmo-test-5/account/"
+            }
+        ],
         currencies: [
             {
                 coinDenom: 'OSMO',
@@ -145,11 +196,19 @@ export const getTestnetChainInfo: ChainInfo[] = [
     {
         chainId: 'mocha-4',
         chainName: 'celestiatestnet3',
+        secName: "celestia",
         rpc: 'https://celestia-testnet-rpc.publicnode.com/',
         rest: 'https://api-mocha.pops.one',
         bip44: {
             coinType: 118
         },
+        explorers: [
+            {
+                kind: "mintscan",
+                url: "https://testnet.mintscan.io/celestia-testnet",
+                tx_page: "https://testnet.mintscan.io/celestia-testnet/txs/"
+            }
+        ],
         bech32Config: {
             bech32PrefixAccAddr: 'celestia',
             bech32PrefixAccPub: 'celestiapub',
