@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { type InitialValidatorState, ValidatorState } from './../lib/stores/walletStore';
+	import { type InitialValidatorState } from './../lib/stores/walletStore';
 	import { get } from 'svelte/store';
 	import { globalState } from './../lib/stores/walletStore';
 	import {
@@ -10,6 +10,7 @@
 	import { chainDataState } from '../lib/stores/walletStore';
 	import { MsgDelegate } from 'cosmjs-types/cosmos/staking/v1beta1/tx';
 	import { type OfflineSigner } from '@cosmjs/proto-signing';
+	import toast from 'svelte-french-toast';
 	export let isShow = false;
 	let isDelegating = false;
 	export let data: InitialValidatorState;
@@ -21,6 +22,7 @@
 		};
 	};
 	const stake = async () => {
+		toast.loading('Staking tokens', { duration: 2000 });
 		const { denom, toSend } = state;
 		const offlineSigner: OfflineSigner = window.getOfflineSigner!($chainDataState.chainId);
 		const signingClient = await SigningStargateClient.connectWithSigner(
@@ -38,10 +40,18 @@
 		const res = await signingClient.signAndBroadcast(
 			state.myAddress,
 			[delegateMsg],
-			{ amount: [{ denom: 'uatom', amount: '500' }], gas: '200000' },
+			{ amount: [{ denom: $globalState.denom, amount: '500' }], gas: '200000' },
 			state.memo
 		);
+		globalState.update((lastState) => {
+			return {
+				...lastState,
+				toSend: '0',
+				memo: ''
+			};
+		});
 		assertIsDeliverTxSuccess(res);
+		toast.success('Successfully Staked');
 	};
 </script>
 
@@ -72,8 +82,11 @@
 		<div class="w-full p-4 flex flex-col gap-5">
 			<div class="flex flex-col gap-2">
 				<p>name : {data.name || data.moniker}</p>
+				<p>rank : #{data.rank}</p>
 				<p>address : {data.address}</p>
 				<p>uptime : {data.uptime * 100 + '%'}</p>
+				<p>Comission : {data.commission.rate * 100 + '%'}</p>
+				<!-- <p>Voting Power : {data.delegations.total_tokens_display}</p> -->
 			</div>
 			<button
 				class="bg-gray-300 font-medium rounded-lg px-2 py-1 text-black"

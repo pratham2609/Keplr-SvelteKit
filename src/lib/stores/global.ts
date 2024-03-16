@@ -6,7 +6,7 @@ export const transactionMode: Writable<string> = writable("Send");
 export const getTestnetChainInfo: ChainInfo[] = [
     {
         chainId: 'theta-testnet-001',
-        chainName: 'theta-testnet-001',
+        chainName: 'cosmoshubtestnet',
         rpc: 'https://rpc.sentry-01.theta-testnet.polypore.xyz/',
         rest: 'https://rest.sentry-01.theta-testnet.polypore.xyz/',
         bip44: {
@@ -52,7 +52,7 @@ export const getTestnetChainInfo: ChainInfo[] = [
     },
     {
         chainId: 'test-core-1',
-        chainName: 'persistencetestnet',
+        chainName: 'persistencetestnet2',
         rpc: 'https://persistence-testnet-rpc.polkachu.com/',
         rest: 'https://persistence-testnet-api.polkachu.com/',
         bip44: {
@@ -144,8 +144,8 @@ export const getTestnetChainInfo: ChainInfo[] = [
     },
     {
         chainId: 'mocha-4',
-        chainName: 'Mocha Testnet',
-        rpc: 'https://rpc-mocha.pops.one',
+        chainName: 'celestiatestnet3',
+        rpc: 'https://celestia-testnet-rpc.publicnode.com/',
         rest: 'https://api-mocha.pops.one',
         bip44: {
             coinType: 118
