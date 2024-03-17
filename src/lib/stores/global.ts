@@ -10,7 +10,14 @@ export interface ChainDataInfo extends ChainInfo {
         tx_page: string,
         account_page?: string
     }[],
-    secName: string
+    secName: string,
+    fee: {
+        denom: string;
+        fixed_min_gas_price: number;
+        low_gas_price: number;
+        average_gas_price: number;
+        high_gas_price: number;
+    }[]
 }
 export const getTestnetChainInfo: ChainDataInfo[] = [
     {
@@ -22,6 +29,13 @@ export const getTestnetChainInfo: ChainDataInfo[] = [
         bip44: {
             coinType: 118
         },
+        fee: [{
+            denom: "uatom",
+            fixed_min_gas_price: 0.005,
+            low_gas_price: 0.01,
+            average_gas_price: 0.025,
+            high_gas_price: 0.03
+        }],
         explorers: [
             {
                 kind: "mintscan",
@@ -81,6 +95,15 @@ export const getTestnetChainInfo: ChainDataInfo[] = [
         bip44: {
             coinType: 118
         },
+        fee: [
+            {
+                denom: "uxprt",
+                fixed_min_gas_price: 0,
+                low_gas_price: 0.05,
+                average_gas_price: 0.125,
+                high_gas_price: 0.2
+            }
+        ],
         explorers: [
             {
                 kind: "ping.pub",
@@ -149,6 +172,15 @@ export const getTestnetChainInfo: ChainDataInfo[] = [
             bech32PrefixConsAddr: 'osmo' + 'valcons',
             bech32PrefixConsPub: 'osmo' + 'valconspub'
         },
+        fee: [
+            {
+                denom: "uosmo",
+                fixed_min_gas_price: 0,
+                low_gas_price: 0.0025,
+                average_gas_price: 0.025,
+                high_gas_price: 0.04
+            }
+        ],
         explorers: [
             {
                 kind: "mintscan",
@@ -202,6 +234,15 @@ export const getTestnetChainInfo: ChainDataInfo[] = [
         bip44: {
             coinType: 118
         },
+        fee: [
+            {
+                denom: "utia",
+                fixed_min_gas_price: 0,
+                low_gas_price: 0.01,
+                average_gas_price: 0.02,
+                high_gas_price: 0.1
+            }
+        ],
         explorers: [
             {
                 kind: "mintscan",

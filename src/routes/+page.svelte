@@ -26,10 +26,9 @@
 		}
 	});
 	const disconnect = () => {
-		// const { keplr } = window;
-		// if (keplr) keplr.disable()
-		window.keplr = undefined
-		console.log(window.keplr)
+		const { keplr } = window;
+		if (keplr) keplr.disable($chainDataState.chainId)
+		isWalletInitialised.set('not-connected');
 	};
 </script>
 
@@ -57,11 +56,13 @@
 				<Stake />
 			{/if}
 		</div>
-		<button on:click={disconnect} class="absolute top-10 right-10 bg-gray-700 text-white rounded-lg font-bold px-2 py-1"
+		<button
+			on:click={disconnect}
+			class="absolute top-10 right-10 bg-gray-700 text-white rounded-lg font-bold px-2 py-1"
 			>Disconnect</button
 		>
 	{:else}
-		<button on:click={() => connectWallet()} class="px-2 py-1 rounded-lg bg-gray-500"
+		<button on:click={connectWallet} class="px-2 py-1 rounded-lg bg-gray-500"
 			>Connect to wallet</button
 		>
 	{/if}

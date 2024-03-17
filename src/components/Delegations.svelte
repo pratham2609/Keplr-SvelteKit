@@ -11,8 +11,8 @@
 	});
 </script>
 
-<table class="w-[1200px] flex flex-col items-center">
-	<tr class="w-full flex justify-between mb-5">
+<table class="w-[1200px]">
+	<tr class="w-fullmb-5">
 		<th class="font-bold">Validator</th>
 		<th class="font-bold">validator address</th>
 		<th class="font-bold">reward</th>
@@ -24,22 +24,23 @@
 		<p>No stakes yet</p>
 	{:else}
 		{#each $rewards as val}
-			<tr class="w-full flex justify-between mb-2">
-				<td>
-					<p>{val.validator}</p>
+			<tr class="w-full mb-2">
+				<td class="text-center">
+					{val.validator}
 				</td>
-				<td>
-					<p>{val.validator_address}</p>
+				<td class="text-center">
+					{val.validator_address}
 				</td>
-				<td>
+				<td class="text-center">
 					{#each val.reward as re}
 						<p class="flex">{(Number(re.amount) / 1000000).toFixed(6)} {re.denom}</p>
 					{/each}
 				</td>
 				<td class="flex items-center gap-2">
 					<button disabled class="bg-gray-600 rounded-lg px-2 py-1">Undelegate</button>
-					<button on:click={() => withdrawRewards(val)} class="bg-green-600 rounded-lg px-2 py-1"
-						>Withdraw</button
+					<button
+						on:click={() => withdrawRewards(val.validator_address)}
+						class="bg-green-600 rounded-lg px-2 py-1">Withdraw</button
 					>
 				</td>
 			</tr>

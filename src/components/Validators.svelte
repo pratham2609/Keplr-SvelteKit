@@ -24,7 +24,7 @@
 		<p>No active validators for {$chainDataState.chainName}</p>
 	{:else}
 		{#each $validators as val}
-			<tr class=" relative mb-2">
+			<tr class=" relative py-4">
 				<td>
 					{val.name ? val.name : val.moniker}
 				</td>
@@ -36,11 +36,11 @@
 						on:click={() => {
 							togglePopup(val);
 						}}
-						class="bg-green-600 rounded-lg px-2 py-1">Stake</button
+						class="bg-green-600 rounded-lg px-2 py-0.5">Stake</button
 					>
 				</td>
 				{#if val.rank >= 1 && val.rank <= 3}
-					<p class="text-green-700 absolute -left-10">#{val.rank}</p>
+					<p class="text-green-700 absolute -left-10 -translate-y-1/2 top-1/2">#{val.rank}</p>
 				{/if}
 			</tr>
 		{/each}

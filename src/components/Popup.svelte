@@ -11,6 +11,7 @@
 	import { MsgDelegate } from 'cosmjs-types/cosmos/staking/v1beta1/tx';
 	import { type OfflineSigner } from '@cosmjs/proto-signing';
 	import toast from 'svelte-french-toast';
+	import { withdrawRewards } from '$lib/actions';
 	export let isShow = false;
 	let isDelegating = false;
 	export let data: InitialValidatorState;
@@ -22,7 +23,6 @@
 		};
 	};
 	const stake = async () => {
-		toast.loading('Staking tokens', { duration: 2000 });
 		const { denom, toSend } = state;
 		const offlineSigner: OfflineSigner = window.getOfflineSigner!($chainDataState.chainId);
 		const signingClient = await SigningStargateClient.connectWithSigner(
@@ -57,9 +57,9 @@
 
 {#if isShow}
 	<div
-		class="w-[500px] h-[500px] z-10 bg-gray-800 rounded-md absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+		class="w-[700px] h-[700px] backdrop-blur-lg z-10 p-5 bg-gray-800 rounded-md absolute flex flex-col justify-between gap-5 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
 	>
-		<div class="w-full h-12 flex items-center justify-between px-5">
+		<div class="w-full flex items-center justify-between">
 			<h1 class="text-white font-bold">Stake</h1>
 			<button
 				on:click={() => {
@@ -79,7 +79,7 @@
 				Close
 			</button>
 		</div>
-		<div class="w-full p-4 flex flex-col gap-5">
+		<div class="w-full flex flex-col justify-between h-full gap-5">
 			<div class="flex flex-col gap-2">
 				<p>name : {data.name || data.moniker}</p>
 				<p>rank : #{data.rank}</p>
@@ -88,13 +88,6 @@
 				<p>Comission : {data.commission.rate * 100 + '%'}</p>
 				<!-- <p>Voting Power : {data.delegations.total_tokens_display}</p> -->
 			</div>
-			<button
-				class="bg-gray-300 font-medium rounded-lg px-2 py-1 text-black"
-				on:click={() => {
-					isDelegating = true;
-				}}
-				>Delegate
-			</button>
 			{#if isDelegating}
 				<input
 					bind:value={state.toSend}
@@ -115,6 +108,20 @@
 					>Send to faucet</button
 				>
 			{/if}
+			<div>
+				<button
+					class="bg-gray-300 font-medium rounded-lg px-2 py-1 text-black"
+					on:click={() => {
+						isDelegating = true;
+					}}
+					>Delegate
+				</button>
+				<button
+					class="bg-gray-300 font-medium rounded-lg px-2 py-1 text-black"
+					on:click={() => withdrawRewards(data.address)}
+					>Withdraw rewards
+				</button>
+			</div>
 		</div>
 	</div>
 {/if}

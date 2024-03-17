@@ -1,9 +1,10 @@
-import { chainDataState, globalState, rewards, validators, type InitialValidatorState } from '$lib/stores/walletStore';
+import { chainDataState, globalState, rewards, validators, type InitialValidatorState, isWalletInitialised } from '$lib/stores/walletStore';
 import { type AccountData, type OfflineSigner } from '@cosmjs/proto-signing';
-import { SigningStargateClient, calculateFee, type StdFee } from '@cosmjs/stargate';
+import { SigningStargateClient, calculateFee } from '@cosmjs/stargate';
 import axios from 'axios';
 import { get } from 'svelte/store';
 import type { Reward } from '../routes/global';
+import { MsgWithdrawDelegatorReward } from "cosmjs-types/cosmos/distribution/v1beta1/tx";
 export const connectWallet = async () => {
     // Suggest the testnet chain to Keplr
     const { keplr } = window;
@@ -12,6 +13,7 @@ export const connectWallet = async () => {
         return;
     }
     const chainData = get(chainDataState);
+    // keplr.enable(chainData.chainId)
     await keplr.experimentalSuggestChain(chainData); // injects non native chains
     // Create the signing client
     const offlineSigner: OfflineSigner = window.getOfflineSigner!(chainData.chainId);
@@ -37,6 +39,7 @@ export const connectWallet = async () => {
         };
         return newState;
     });
+    isWalletInitialised.set("connected")
 };
 
 export const getValidators = async () => {
@@ -63,7 +66,7 @@ export const getRewards = async () => {
 
 
 
-export const withdrawRewards = async (rew: Reward) => {
+export const withdrawRewards = async (validator_address: string) => {
     const { keplr } = window;
     const chainData = get(chainDataState);
     if (!keplr) {
@@ -75,12 +78,20 @@ export const withdrawRewards = async (rew: Reward) => {
     const signingClient = await SigningStargateClient.connectWithSigner(chainData.rpc, offlineSigner);
     const messages = [{
         typeUrl: "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
-        value: {
+        value: MsgWithdrawDelegatorReward.fromPartial({
             delegatorAddress: get(globalState).myAddress,
-            validatorAddress: get(rewards)[0].validator_address
-        }
+            validatorAddress: validator_address
+        })
     }];
-    // const fee = calculateFee(200000, { denom: "uatom", amount: "5000" });
+    const gasEstimation = await signingClient.simulate(
+        get(globalState).myAddress,
+        messages,
+        get(globalState).memo
+    );
+    const fee = calculateFee(
+        Math.round(gasEstimation * 1.4),
+        String(get(chainDataState).fee[0].high_gas_price * 5) + get(chainDataState).fee[0].denom
+    );
     const result = await signingClient.signAndBroadcast(get(globalState).myAddress, messages, fee, get(globalState).memo);
     return result;
 }

@@ -4,7 +4,8 @@
 		SigningStargateClient,
 		StargateClient,
 		assertIsDeliverTxSuccess,
-		type MsgSendEncodeObject
+		type MsgSendEncodeObject,
+		calculateFee
 	} from '@cosmjs/stargate';
 	import { type OfflineSigner } from '@cosmjs/proto-signing';
 	import { chainDataState, globalState } from '../lib/stores/walletStore';
@@ -42,10 +43,19 @@
 				amount: [{ denom, amount: toSend }]
 			}
 		};
+		const gasEstimation = await signingClient.simulate(
+			$globalState.myAddress,
+			[sendMsg],
+			$globalState.memo
+		);
+		const fee = calculateFee(
+			Math.round(gasEstimation * 1.4),
+			String($chainDataState.fee[0].high_gas_price * 5) + $chainDataState.fee[0].denom
+		);
 		const sendResult = await signingClient.signAndBroadcast(
 			$globalState.myAddress,
 			[sendMsg],
-			{ amount: [{ denom: $globalState.denom, amount: '500' }], gas: '200000' },
+			fee,
 			$globalState.memo
 		);
 		console.log(sendResult);
@@ -100,7 +110,7 @@
 			/>
 			<p>
 				Balance: {(Number($globalState.faucetBalance) / 1000000).toFixed(6)}
-				{$globalState.denom}
+				{$chainDataState.feeCurrencies[0].coinDenom}
 			</p>
 			<div class="w-full flex justify-end">
 				<button
@@ -112,7 +122,10 @@
 		<fieldset class="card w-full flex flex-col gap-2 px-5 py-2">
 			<legend>You</legend>
 			<p>Address: {$globalState.myAddress}</p>
-			<p>Balance: {(Number($globalState.myBalance) / 1000000).toFixed(6)} {$globalState.denom}</p>
+			<p>
+				Balance: {(Number($globalState.myBalance) / 1000000).toFixed(6)}
+				{$chainDataState.feeCurrencies[0].coinDenom}
+			</p>
 		</fieldset>
 		<fieldset class="card w-full flex flex-col gap-3 px-5 py-4">
 			<legend>Send</legend>
