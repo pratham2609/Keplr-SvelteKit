@@ -33,11 +33,10 @@
 				</td>
 				<td class="text-center">
 					{#each val.reward as re}
-						<p class="flex">{(Number(re.amount) / 1000000).toFixed(6)} {re.denom}</p>
+						<p class="flex justify-center,">{(Number(re.amount) / 1000000).toFixed(6)} {re.denom}</p>
 					{/each}
 				</td>
-				<td class="flex items-center gap-2">
-					<button disabled class="bg-gray-600 rounded-lg px-2 py-1">Undelegate</button>
+				<td class="flex justify-center gap-2">
 					<button
 						on:click={() => withdrawRewards(val.validator_address)}
 						class="bg-green-600 rounded-lg px-2 py-1">Withdraw</button

@@ -4,8 +4,7 @@
 		SigningStargateClient,
 		StargateClient,
 		assertIsDeliverTxSuccess,
-		type MsgSendEncodeObject,
-		calculateFee
+		type MsgSendEncodeObject
 	} from '@cosmjs/stargate';
 	import { type OfflineSigner } from '@cosmjs/proto-signing';
 	import { chainDataState, globalState } from '../lib/stores/walletStore';
@@ -23,6 +22,7 @@
 		});
 		toast.success('Fetched Details');
 	}
+	let txHash = '';
 	async function onSendClicked() {
 		if (!$globalState.faucetAddress.includes($chainDataState.bech32Config.bech32PrefixAccAddr)) {
 			toast.error(`Please provide address of ${$chainDataState.chainName} chain`);
@@ -34,7 +34,6 @@
 			$chainDataState.rpc,
 			offlineSigner
 		);
-		toast.loading('Sending', { duration: 1 });
 		const sendMsg: MsgSendEncodeObject = {
 			typeUrl: '/cosmos.bank.v1beta1.MsgSend',
 			value: {
@@ -43,21 +42,13 @@
 				amount: [{ denom, amount: toSend }]
 			}
 		};
-		const gasEstimation = await signingClient.simulate(
-			$globalState.myAddress,
-			[sendMsg],
-			$globalState.memo
-		);
-		const fee = calculateFee(
-			Math.round(gasEstimation * 1.4),
-			String($chainDataState.fee[0].high_gas_price * 5) + $chainDataState.fee[0].denom
-		);
 		const sendResult = await signingClient.signAndBroadcast(
 			$globalState.myAddress,
 			[sendMsg],
-			fee,
+			{ amount: [{ denom: $globalState.denom, amount: '500' }], gas: '200000' },
 			$globalState.memo
 		);
+		txHash = sendResult.transactionHash;
 		console.log(sendResult);
 		assertIsDeliverTxSuccess(sendResult);
 		let myBalance = (await signingClient.getBalance($globalState.myAddress, denom)).amount;
@@ -72,19 +63,11 @@
 				memo: ''
 			};
 			return newState;
-		});
-		let toLink = '';
-		if ($chainDataState.explorers.find((val) => val.kind == 'mintscan')) {
-			toLink = `https://www.mintscan.io/${$chainDataState.secName}/tx/`;
-		} else {
-			toLink = $chainDataState.explorers[0].url;
-		}
-		toast.success(
-			`Send Successfully, check transaction at
-			<a href=${toLink + sendResult.transactionHash}>This link</a>
-		`,
-			{ duration: 7000 }
-		);
+		}); // make the message visible
+
+		setTimeout(function () {
+			txHash = ''; // hide the message after 10 seconds
+		}, 7000);
 	}
 	const handleValueChange = (e: Event) => {
 		globalState.update((localState) => {
@@ -94,9 +77,21 @@
 			};
 		});
 	};
+	function copyToClipboard() {
+		navigator.clipboard.writeText($globalState.myAddress);
+		toast.success("Copied to clipboard");
+	}
 </script>
 
 <Toaster />
+{#if txHash != ''}
+	<a
+		class="absolute underline text-green-500 top-10 left-1/2 -translate-x-1/2"
+		target="_blank"
+		href={`https://www.mintscan.io/${$chainDataState.secName}-testnet/tx/${txHash}`}
+		>Sent Successfully, click here to check
+	</a>
+{/if}
 <div class="w-full flex flex-col items-center gap-10">
 	<div class="w-full flex flex-col gap-5 items-center">
 		<fieldset class="card w-full flex flex-col gap-2 px-5 py-2">
@@ -121,7 +116,25 @@
 		</fieldset>
 		<fieldset class="card w-full flex flex-col gap-2 px-5 py-2">
 			<legend>You</legend>
-			<p>Address: {$globalState.myAddress}</p>
+			<div class="w-full flex items-center gap-4">
+				<p>Address: {$globalState.myAddress}</p>
+				<button class="hover:opacity-25 transition" on:click={copyToClipboard}>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke-width="1.5"
+						stroke="currentColor"
+						class="w-6 h-6"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75"
+						/>
+					</svg>
+				</button>
+			</div>
 			<p>
 				Balance: {(Number($globalState.myBalance) / 1000000).toFixed(6)}
 				{$chainDataState.feeCurrencies[0].coinDenom}

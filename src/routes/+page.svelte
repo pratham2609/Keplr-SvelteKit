@@ -35,7 +35,7 @@
 <main class="w-screen h-screen flex flex-col items-center relative py-20">
 	{#if $isWalletInitialised == 'connected'}
 		<div
-			class="max-w-[500px] w-full h-full my-auto mx-auto flex flex-col gap-10 items-center justify-start"
+			class="max-w-[600px] w-full h-full my-auto mx-auto flex flex-col gap-10 items-center justify-start"
 		>
 			<Select />
 			<div class="flex w-full items-center gap-4">
