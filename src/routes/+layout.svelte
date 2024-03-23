@@ -22,9 +22,6 @@
 	// Floating UI for Popups
 	import { computePosition, autoUpdate, flip, shift, offset, arrow } from '@floating-ui/dom';
 	import { storePopup } from '@skeletonlabs/skeleton';
-	import type { LayoutData } from './$types';
-
-	export let data: LayoutData;
 	storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow });
 
 	onMount(() => {
@@ -32,9 +29,16 @@
 			connectWallet();
 		});
 	});
+	export const queryClient = new QueryClient({
+		defaultOptions: {
+			queries: {
+				enabled: browser,
+			},
+		},
+	});
 </script>
 
-<QueryClientProvider client={data.queryClient}>
+<QueryClientProvider client={queryClient}>
 	<main>
 		<slot />
 	</main>

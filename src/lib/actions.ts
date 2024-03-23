@@ -1,10 +1,10 @@
-import { chainDataState, globalState, rewards, validators, type InitialValidatorState, isWalletInitialised } from '$lib/stores/walletStore';
+import { chainDataState, globalState, type InitialValidatorState, isWalletInitialised } from '$lib/stores/walletStore';
 import { type AccountData, type OfflineSigner } from '@cosmjs/proto-signing';
-import { SigningStargateClient, calculateFee } from '@cosmjs/stargate';
+import { SigningStargateClient, calculateFee, type MsgDelegateEncodeObject, assertIsDeliverTxSuccess } from '@cosmjs/stargate';
 import axios from 'axios';
 import { get } from 'svelte/store';
-import type { Reward } from '../routes/global';
 import { MsgWithdrawDelegatorReward } from "cosmjs-types/cosmos/distribution/v1beta1/tx";
+import { MsgDelegate } from 'cosmjs-types/cosmos/staking/v1beta1/tx';
 export const connectWallet = async () => {
     // Suggest the testnet chain to Keplr
     const { keplr } = window;
@@ -12,30 +12,19 @@ export const connectWallet = async () => {
         alert('You need to install Keplr');
         return;
     }
+    await keplr.enable(get(chainDataState).chainId);
     const chainData = get(chainDataState);
-    // keplr.enable(chainData.chainId)
     await keplr.experimentalSuggestChain(chainData); // injects non native chains
     // Create the signing client
     const offlineSigner: OfflineSigner = window.getOfflineSigner!(chainData.chainId);
-    const signingClient = await SigningStargateClient.connectWithSigner(
-        chainData.rpc,
-        offlineSigner
-    );
     // Get the address and balance of your user
     const account: AccountData = (await offlineSigner.getAccounts())[0];
     const myAddress = account.address;
-    const myBalance = (
-        await signingClient.getBalance(
-            account.address,
-            chainData.currencies[0].coinMinimalDenom
-        )
-    ).amount;
     globalState.update((localState) => {
         const newState = {
             ...localState,
             denom: chainData.currencies[0].coinMinimalDenom,
             myAddress: myAddress,
-            myBalance: myBalance
         };
         return newState;
     });
@@ -45,23 +34,15 @@ export const connectWallet = async () => {
 export const getValidators = async () => {
     const data = await axios.get(`https://validators.testcosmos.directory/chains/${get(chainDataState).chainName}`);
     const val: InitialValidatorState[] = data.data.validators.sort((a: InitialValidatorState, b: InitialValidatorState) => a.rank - b.rank);
-    validators.set(val)
     return val;
 }
+
 
 export const getRewards = async () => {
     const data = await axios.get(`
 		https://rest.testcosmos.directory/${get(chainDataState).chainName}/cosmos/distribution/v1beta1/delegators/${get(globalState).myAddress}/rewards`);
-    const validatorMonikerMap: { [key: string]: string } = {};
-    const val: InitialValidatorState[] = get(validators)
-    val.map((item) => {
-        validatorMonikerMap[item.address] = item.moniker;
-    })
-    const rewardsNew = data.data.rewards.map((item: Reward) => {
-        return { ...item, validator: validatorMonikerMap[item.validator_address] };
-    });
-    rewards.set(rewardsNew)
-    return rewardsNew;
+    console.log(data)
+    return data;
 }
 
 
@@ -113,3 +94,71 @@ export const withdrawRewards = async (validator_address: string) => {
 //     }
 //     return usedFee;
 // }
+
+export const getBalance = async () => {
+    let myBalance = "0";
+    const state = get(globalState)
+    if (get(isWalletInitialised) === "connected" && state.myAddress !== "Loading...") {
+        const { keplr } = window;
+        if (!keplr) {
+            alert('You need to install Keplr');
+            return;
+        }
+        const chainData = get(chainDataState);
+        keplr.enable(chainData.chainId)
+        await keplr.experimentalSuggestChain(chainData); // injects non native chains
+        // Create the signing client
+        const offlineSigner: OfflineSigner = window.getOfflineSigner!(chainData.chainId);
+        const signingClient = await SigningStargateClient.connectWithSigner(
+            chainData.rpc,
+            offlineSigner
+        );
+        // Get the address and balance of your user
+        const account: AccountData = (await offlineSigner.getAccounts())[0];
+        myBalance = (
+            await signingClient.getBalance(
+                account.address,
+                chainData.currencies[0].coinMinimalDenom
+            )
+        ).amount;
+    }
+    return myBalance;
+};
+
+export const stake = async ({ myAddress, toAddress, denom, toSend, memo }: {
+    myAddress: string,
+    toAddress: string,
+    denom: string,
+    toSend: string,
+    memo: string
+}) => {
+    const chainData = get(chainDataState);
+    const offlineSigner: OfflineSigner = window.getOfflineSigner!(chainData.chainId);
+    const signingClient = await SigningStargateClient.connectWithSigner(
+        chainData.rpc,
+        offlineSigner
+    );
+    const delegateMsg: MsgDelegateEncodeObject = {
+        typeUrl: '/cosmos.staking.v1beta1.MsgDelegate',
+        value: MsgDelegate.fromPartial({
+            delegatorAddress: myAddress,
+            validatorAddress: toAddress,
+            amount: { denom, amount: toSend }
+        })
+    };
+    const res = await signingClient.signAndBroadcast(
+        myAddress,
+        [delegateMsg],
+        { amount: [{ denom: denom, amount: '500' }], gas: '200000' },
+        memo
+    );
+    globalState.update((lastState) => {
+        return {
+            ...lastState,
+            toSend: '0',
+            memo: ''
+        };
+    });
+    assertIsDeliverTxSuccess(res);
+    return res.transactionHash
+};

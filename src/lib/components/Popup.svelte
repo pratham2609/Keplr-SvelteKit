@@ -1,57 +1,46 @@
 <script lang="ts">
-	import { type InitialValidatorState } from './../lib/stores/walletStore';
 	import { get } from 'svelte/store';
-	import { globalState } from './../lib/stores/walletStore';
-	import {
-		assertIsDeliverTxSuccess,
-		SigningStargateClient,
-		type MsgDelegateEncodeObject
-	} from '@cosmjs/stargate';
-	import { chainDataState } from '../lib/stores/walletStore';
-	import { MsgDelegate } from 'cosmjs-types/cosmos/staking/v1beta1/tx';
-	import { type OfflineSigner } from '@cosmjs/proto-signing';
 	import toast from 'svelte-french-toast';
-	export let isShow = false;
+	import { globalState, type InitialValidatorState } from '$lib/stores/walletStore';
+	import useDelegation from '$lib/actions/useDelegation';
+	export let isShow: boolean;
 	let action = '';
 	export let data: InitialValidatorState;
 	$: state = get(globalState);
+	$: stake = useDelegation();
+	$: sendState = {
+		toAddress: '',
+		toSend: '',
+		memo: '',
+		denom: state.denom
+	};
 	const handleValueChange = (e: Event) => {
-		state = {
-			...state,
+		sendState = {
+			...sendState,
 			[(e.target as HTMLInputElement).name]: (e.target as HTMLInputElement).value
 		};
 	};
-	const stake = async () => {
-		const { denom, toSend } = state;
-		const offlineSigner: OfflineSigner = window.getOfflineSigner!($chainDataState.chainId);
-		const signingClient = await SigningStargateClient.connectWithSigner(
-			$chainDataState.rpc,
-			offlineSigner
+	const handleClick = () => {
+		$stake.mutate(
+			{
+				myAddress: state.myAddress,
+				toAddress: data.address,
+				toSend: state.toSend,
+				memo: state.memo,
+				denom: state.denom
+			},
+			{
+				onSuccess: (data) => {
+					console.log(data);
+					toast.success('Successfully Staked');
+					isShow = false;
+				},
+				onError: (error) => {
+					console.log(error);
+					toast.error('Transaction failed');
+				}
+			}
 		);
-		const delegateMsg: MsgDelegateEncodeObject = {
-			typeUrl: '/cosmos.staking.v1beta1.MsgDelegate',
-			value: MsgDelegate.fromPartial({
-				delegatorAddress: state.myAddress,
-				validatorAddress: data.address,
-				amount: { denom, amount: toSend }
-			})
-		};
-		const res = await signingClient.signAndBroadcast(
-			state.myAddress,
-			[delegateMsg],
-			{ amount: [{ denom: $globalState.denom, amount: '500' }], gas: '200000' },
-			state.memo
-		);
-		globalState.update((lastState) => {
-			return {
-				...lastState,
-				toSend: '0',
-				memo: ''
-			};
-		});
-		assertIsDeliverTxSuccess(res);
-		toast.success('Successfully Staked');
-		isShow = false
 	};
 </script>
 
@@ -90,32 +79,34 @@
 			<div class="w-full flex flex-col gap-3">
 				{#if action == 'stake'}
 					<input
-						bind:value={state.toSend}
+						bind:value={sendState.toSend}
 						class="rounded-md bg-transparent px-2 py-0"
 						name="toSend"
 						placeholder="Amount to send"
 						on:input={handleValueChange}
 					/>
 					<input
-						bind:value={state.memo}
+						bind:value={sendState.memo}
 						class="rounded-md bg-transparent px-2 py-0"
 						name="memo"
 						placeholder="Write a memo!"
 						on:input={handleValueChange}
 					/>
-					<button class="bg-gray-300 font-medium rounded-lg px-2 py-1 text-black" on:click={stake}
-						>Stake</button
+					<button
+						class="bg-gray-300 font-medium rounded-lg px-2 py-1 text-black"
+						on:click={handleClick}>Stake</button
 					>
 				{:else if action == 'withdraw'}
 					<input
-						bind:value={state.memo}
+						bind:value={sendState.memo}
 						class="rounded-md bg-transparent px-2 py-0"
 						name="memo"
 						placeholder="Write a memo!"
 						on:input={handleValueChange}
 					/>
-					<button class="bg-gray-300 font-medium rounded-lg px-2 py-1 text-black" on:click={stake}
-						>Withdraw</button
+					<button
+						class="bg-gray-300 font-medium rounded-lg px-2 py-1 text-black"
+						on:click={handleClick}>Withdraw</button
 					>
 				{/if}
 				<div class="w-full flex items-center gap-4">

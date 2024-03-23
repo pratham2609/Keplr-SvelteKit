@@ -1,8 +1,10 @@
 <script lang="ts">
-	import { ValidatorState, type InitialValidatorState } from '../lib/stores/walletStore';
 	import Popup from './Popup.svelte';
 	import Delegations from './Delegations.svelte';
 	import Validators from './Validators.svelte';
+	import { ValidatorState, type InitialValidatorState } from '$lib/stores/walletStore';
+	import useGetValidators from '$lib/actions/useGetValidators';
+	$: validatorsList = useGetValidators();
 	let selected = 'delegations';
 	const changeMode = (newMode: string) => {
 		selected = newMode;
@@ -31,8 +33,8 @@
 		>
 	</div>
 	{#if selected == 'delegations'}
-		<Delegations />
+		<Delegations validators={$validatorsList.data} />
 	{:else}
-		<Validators {togglePopup} />
+		<Validators {togglePopup} validators={$validatorsList.data} />
 	{/if}
 </section>

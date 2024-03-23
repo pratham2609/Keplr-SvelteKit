@@ -7,7 +7,7 @@ export interface State {
     denom: string;
     faucetBalance: string;
     myAddress: string;
-    myBalance: string;
+    myBalance: string | undefined;
     toSend: string;
     memo: string
 }

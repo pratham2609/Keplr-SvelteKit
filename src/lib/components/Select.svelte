@@ -2,14 +2,12 @@
 	import { getTestnetChainInfo } from '$lib/stores/global';
 	import { chainDataState, globalState } from '$lib/stores/walletStore';
 	import { connectWallet, getRewards, getValidators } from '$lib/actions';
-	import { get } from 'svelte/store';
 	import toast from 'svelte-french-toast';
-
-	$: chainId = get(chainDataState).chainName;
+	export let selected = 'theta-testnet-00';
 	const changeChainName = async (e: Event) => {
 		try {
-			chainId = (e.target as HTMLInputElement).value;
-			const newChain = getTestnetChainInfo.filter((val) => val.chainId == chainId);
+			selected = (e.target as HTMLInputElement).value;
+			const newChain = getTestnetChainInfo.filter((val) => val.chainId == selected);
 			chainDataState.set(newChain[0]);
 			globalState.update((lastState) => {
 				return { ...lastState, denom: $chainDataState.currencies[0].coinMinimalDenom };
@@ -26,7 +24,7 @@
 <div class="flex flex-col items-center gap-4">
 	<h1 class="font-semibold text-xl">Change network</h1>
 	<select
-		bind:value={chainId}
+		bind:value={selected}
 		class="border-2 rounded-lg bg-purple-900"
 		on:change={changeChainName}
 	>

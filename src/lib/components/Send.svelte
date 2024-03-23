@@ -1,86 +1,90 @@
 <script lang="ts">
 	import {
 		type Coin,
-		SigningStargateClient,
 		StargateClient,
-		assertIsDeliverTxSuccess,
+		type StdFee,
 		type MsgSendEncodeObject
 	} from '@cosmjs/stargate';
-	import { type OfflineSigner } from '@cosmjs/proto-signing';
-	import { chainDataState, globalState } from '../lib/stores/walletStore';
 	import toast, { Toaster } from 'svelte-french-toast';
+	import { chainDataState, globalState } from '$lib/stores/walletStore';
+	import onSendClicked from '$lib/actions/useSendTokens';
+	import useGetUsersBalance from '$lib/actions/useGetUserBalance';
+	import { simulateAndGetFees } from '$lib/actions/getFees';
+	$: balance = useGetUsersBalance();
+	$: checkBalance = '0';
+	$: checkUser = '';
+	$: sendTokens = onSendClicked();
 	async function updateFaucetBalance() {
-		if (!$globalState.faucetAddress.includes($chainDataState.bech32Config.bech32PrefixAccAddr)) {
+		if (!checkUser.includes($chainDataState.bech32Config.bech32PrefixAccAddr)) {
 			toast.error(`Please provide address of ${$chainDataState.chainName} chain`);
+			return;
 		}
 		const client = await StargateClient.connect($chainDataState.rpc);
-		const balances: readonly Coin[] = await client.getAllBalances($globalState.faucetAddress);
+		const balances: readonly Coin[] = await client.getAllBalances(checkUser);
 		const first = balances[0];
-		globalState.update((localState) => {
-			const newState = { ...localState, denom: first.denom, faucetBalance: first.amount };
-			return newState;
-		});
+		checkBalance = first.amount;
 		toast.success('Fetched Details');
 	}
-	let txHash = '';
-	async function onSendClicked() {
-		if (!$globalState.faucetAddress.includes($chainDataState.bech32Config.bech32PrefixAccAddr)) {
-			toast.error(`Please provide address of ${$chainDataState.chainName} chain`);
-		}
-		toast.loading('Sending tokens', { duration: 1000 });
-		const { denom, toSend } = $globalState;
-		const offlineSigner: OfflineSigner = window.getOfflineSigner!($chainDataState.chainId);
-		const signingClient = await SigningStargateClient.connectWithSigner(
-			$chainDataState.rpc,
-			offlineSigner
+	let txFees: StdFee;
+	$: txHash = '';
+	$: sendState = {
+		to: '',
+		amount: '',
+		memo: ''
+	};
+	const onClick = async () => {
+		$sendTokens.mutate(
+			{
+				toAddress: sendState.to,
+				myAddress: $globalState.myAddress,
+				sendAmount: sendState.amount,
+				memo: sendState.memo,
+				denom: $globalState.denom
+			},
+			{
+				onSuccess: (data) => {
+					txHash = data;
+					sendState = {
+						to: '',
+						amount: '',
+						memo: ''
+					};
+				},
+				onError: (error) => {
+					console.log(error);
+					toast.error('Transaction failed');
+				}
+			}
 		);
+	};
+	const handleValueChange = (e: Event) => {
+		sendState = {
+			...sendState,
+			[(e.target as HTMLInputElement).name]: (e.target as HTMLInputElement).value
+		};
+	};
+	const handleCheckUserChange = (e: Event) => {
+		checkUser = (e.target as HTMLInputElement).value;
+		if (checkUser == '') {
+			checkBalance = '0';
+		}
+	};
+	function copyToClipboard() {
+		navigator.clipboard.writeText($globalState.myAddress);
+		toast.success('Copied to clipboard');
+	}
+	const getSimulatedFees = async () => {
 		const sendMsg: MsgSendEncodeObject = {
 			typeUrl: '/cosmos.bank.v1beta1.MsgSend',
 			value: {
 				fromAddress: $globalState.myAddress,
-				toAddress: $globalState.faucetAddress,
-				amount: [{ denom, amount: toSend }]
+				toAddress: sendState.to,
+				amount: [{ denom: $globalState.denom, amount: sendState.amount }]
 			}
 		};
-		const sendResult = await signingClient.signAndBroadcast(
-			$globalState.myAddress,
-			[sendMsg],
-			{ amount: [{ denom: $globalState.denom, amount: '500' }], gas: '200000' },
-			$globalState.memo
-		);
-		txHash = sendResult.transactionHash;
-		console.log(sendResult);
-		assertIsDeliverTxSuccess(sendResult);
-		let myBalance = (await signingClient.getBalance($globalState.myAddress, denom)).amount;
-		globalState.update(() => {
-			const newState = {
-				faucetAddress: '',
-				denom: 'denom',
-				faucetBalance: '0',
-				myAddress: $globalState.myAddress,
-				myBalance: myBalance,
-				toSend: '0',
-				memo: ''
-			};
-			return newState;
-		}); // make the message visible
-
-		setTimeout(function () {
-			txHash = ''; // hide the message after 10 seconds
-		}, 7000);
-	}
-	const handleValueChange = (e: Event) => {
-		globalState.update((localState) => {
-			return {
-				...localState,
-				[(e.target as HTMLInputElement).name]: (e.target as HTMLInputElement).value
-			};
-		});
+		txFees = await simulateAndGetFees([sendMsg], sendState.memo);
+		console.log(txFees);
 	};
-	function copyToClipboard() {
-		navigator.clipboard.writeText($globalState.myAddress);
-		toast.success("Copied to clipboard");
-	}
 </script>
 
 <Toaster />
@@ -100,11 +104,11 @@
 				name="faucetAddress"
 				class="px-2 py-1 rounded-lg border-2 bg-transparent text-white"
 				placeholder="Address"
-				bind:value={$globalState.faucetAddress}
-				on:input={handleValueChange}
+				bind:value={checkUser}
+				on:input={handleCheckUserChange}
 			/>
 			<p>
-				Balance: {(Number($globalState.faucetBalance) / 1000000).toFixed(6)}
+				Balance: {(Number(checkBalance) / 1000000).toFixed(6)}
 				{$chainDataState.feeCurrencies[0].coinDenom}
 			</p>
 			<div class="w-full flex justify-end">
@@ -136,33 +140,50 @@
 				</button>
 			</div>
 			<p>
-				Balance: {(Number($globalState.myBalance) / 1000000).toFixed(6)}
+				Balance: {(Number($balance.data?.balance) / 1000000).toFixed(6)}
 				{$chainDataState.feeCurrencies[0].coinDenom}
 			</p>
 		</fieldset>
 		<fieldset class="card w-full flex flex-col gap-3 px-5 py-4">
 			<legend>Send</legend>
+			<div class="flex flex-col gap-2">
+				<label for="to">To:</label>
+				<input
+					bind:value={sendState.to}
+					class="rounded-md bg-transparent px-2 py-1"
+					name="to"
+					id="to"
+					placeholder="To"
+					on:input={handleValueChange}
+				/>
+			</div>
 			<p>Amount to send:</p>
 			<input
-				bind:value={$globalState.toSend}
-				class="rounded-md bg-transparent px-2 py-0"
-				name="toSend"
+				bind:value={sendState.amount}
+				class="rounded-md bg-transparent px-2 py-1"
+				name="amount"
 				placeholder="Amount to send"
 				on:input={handleValueChange}
 			/>
 			<label for="memo">write a memo</label>
 			<input
-				bind:value={$globalState.memo}
+				bind:value={sendState.memo}
 				class="rounded-md bg-transparent px-2 py-1"
 				name="memo"
 				id="memo"
 				placeholder="Write a memo!"
 				on:input={handleValueChange}
 			/>
-			<!-- {state.denom} -->
-			<button
-				class="bg-gray-300 font-medium rounded-lg px-2 py-1 text-black"
-				on:click={onSendClicked}>Send to faucet</button
+			<div class="w-full flex justify-end gap-3 items-center">
+				Tx Fees: {txFees === undefined
+					? '0'
+					: `${txFees.amount[0].amount} ${txFees.amount[0].denom}`}
+				<button class="px-3 py-1 bg-gray-700 rounded-md font-medium" on:click={getSimulatedFees}
+					>Simulate</button
+				>
+			</div>
+			<button class="bg-gray-300 font-medium rounded-lg px-2 py-1 text-black" on:click={onClick}
+				>Send Tokens</button
 			>
 		</fieldset>
 	</div>

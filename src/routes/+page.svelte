@@ -1,13 +1,16 @@
 <script lang="ts">
+	import useGetUsersBalance from './../lib/actions/useGetUserBalance';
+	import Stake from '$lib/components/Stake.svelte';
+	import Select from '$lib/components/Select.svelte';
 	import { transactionMode } from '../lib/stores/global';
 	import { get } from 'svelte/store';
-	import Send from '../components/Send.svelte';
 	import { onMount } from 'svelte';
 	import { chainDataState, globalState, isWalletInitialised } from '../lib/stores/walletStore';
-	import Stake from '../components/Stake.svelte';
-	import Select from '../components/Select.svelte';
 	import { connectWallet } from '$lib/actions';
+	import Send from '$lib/components/Send.svelte';
 	$: mode = get(transactionMode);
+	$: selected = 'theta-testnet-001';
+	$: balance = useGetUsersBalance();
 	const changeMode = (newMode: string) => {
 		transactionMode.update(() => {
 			return newMode;
@@ -27,7 +30,7 @@
 	});
 	const disconnect = () => {
 		const { keplr } = window;
-		if (keplr) keplr.disable($chainDataState.chainId)
+		if (keplr) keplr.disable($chainDataState.chainId);
 		isWalletInitialised.set('not-connected');
 	};
 </script>
@@ -37,7 +40,7 @@
 		<div
 			class="max-w-[600px] w-full h-full my-auto mx-auto flex flex-col gap-10 items-center justify-start"
 		>
-			<Select />
+			<Select {selected} />
 			<div class="flex w-full items-center gap-4">
 				<button
 					on:click={() => changeMode('Send')}
