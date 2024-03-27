@@ -4,8 +4,17 @@
 	import Validators from './Validators.svelte';
 	import { ValidatorState, type InitialValidatorState } from '$lib/stores/walletStore';
 	import useGetValidators from '$lib/actions/useGetValidators';
+	import useGetDelegations from '$lib/actions/useGetDelegations';
 	$: validatorsList = useGetValidators();
+	$: delegations = useGetDelegations();
 	let selected = 'delegations';
+	const validatorMonikerMap: { [key: string]: string } = {};
+	$validatorsList?.data?.map((item) => {
+		validatorMonikerMap[item.address] = item.moniker;
+	});
+	$: rewards = $delegations?.data?.map((item) => {
+		return { ...item, validator: validatorMonikerMap[item.validator_address] };
+	});
 	const changeMode = (newMode: string) => {
 		selected = newMode;
 	};
@@ -33,7 +42,7 @@
 		>
 	</div>
 	{#if selected == 'delegations'}
-		<Delegations validators={$validatorsList.data} />
+		<Delegations rewards={rewards} />
 	{:else}
 		<Validators {togglePopup} validators={$validatorsList.data} />
 	{/if}

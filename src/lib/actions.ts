@@ -41,8 +41,7 @@ export const getValidators = async () => {
 export const getRewards = async () => {
     const data = await axios.get(`
 		https://rest.testcosmos.directory/${get(chainDataState).chainName}/cosmos/distribution/v1beta1/delegators/${get(globalState).myAddress}/rewards`);
-    console.log(data)
-    return data;
+    return data.data;
 }
 
 

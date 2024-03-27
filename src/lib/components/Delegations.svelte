@@ -1,23 +1,11 @@
 <script lang="ts">
-	import { type InitialValidatorState } from './../stores/walletStore';
-	import { onMount } from 'svelte';
-	import { getRewards, withdrawRewards } from '$lib/actions';
-	import useGetDelegations from '$lib/actions/useGetDelegations';
-	export let validators: InitialValidatorState[] = [];
-	$: delegations = useGetDelegations();
-	const validatorMonikerMap: { [key: string]: string } = {};
-	validators.map((item) => {
-		validatorMonikerMap[item.address] = item.moniker;
-	});
-	// console.log($delegations.data)
-	// let rewards: Reward[] = [];
-
-	// rewards = $delegations.data?.rewards.map((item: Reward) => {
-	// 	return { ...item, validator: validatorMonikerMap[item.validator_address] };
-	// });
+	import { withdrawRewards } from '$lib/actions';
+	import { chainDataState } from '$lib/stores/walletStore';
+	import type { Reward } from '../../routes/global';
+	export let rewards: Reward[] = [];
 </script>
 
-<!-- <table class="w-[1200px]">
+<table class="w-[1200px]">
 	<tr class="w-fullmb-5">
 		<th class="font-bold">Validator</th>
 		<th class="font-bold">validator address</th>
@@ -39,7 +27,7 @@
 					{#each val.reward as re}
 						<p class="flex justify-center,">
 							{(Number(re.amount) / 1000000).toFixed(6)}
-							{re.denom}
+							{$chainDataState.currencies[0].coinDenom}
 						</p>
 					{/each}
 				</td>
@@ -52,4 +40,4 @@
 			</tr>
 		{/each}
 	{/if}
-</table> -->
+</table>
